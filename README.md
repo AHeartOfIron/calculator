@@ -7,4 +7,4 @@
 A modern, multilingual web application for calculating areas from geographic files.
 
 
-https://aheartofiron.github.io/calculator.html
+https://aheartofiron.github.io/index.html
