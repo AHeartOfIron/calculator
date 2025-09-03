@@ -1,0 +1,27 @@
+{
+  "name": "cost-calculators",
+  "version": "1.0.0",
+  "description": "Набір калькуляторів для розрахунку вартості послуг розмінування та обстеження",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx http-server -p 8000"
+  },
+  "keywords": [
+    "calculator",
+    "demining",
+    "eore",
+    "nts",
+    "route",
+    "ukraine"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/cost-calculators.git"
+  },
+  "homepage": "https://yourusername.github.io/cost-calculators/",
+  "dependencies": {},
+  "devDependencies": {}
+}

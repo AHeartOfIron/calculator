@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demining Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        .language-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .top-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .home-btn {
+            width: 45px;
+            height: 45px;
+            border: 2px solid var(--primary);
+            background: var(--bg-secondary);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 0, 64, 0.2);
+        }
+        
+        .home-btn:hover {
+            background: var(--primary);
+            color: #000;
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(255, 0, 64, 0.4);
+        }
+        
+        .lang-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--primary);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 0, 64, 0.2);
+        }
+        
+        .top-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ff0040;
+            background: #000;
+            color: #ff0040;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-family: 'Times New Roman', serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 0, 64, 0.2);
+        }
+        
+        .control-btn:hover {
+            background: #ff0040;
+            color: #000;
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(255, 0, 64, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="top-controls">
+        <a href="index.html" class="control-btn" title="Головне меню">
+            <i class="fas fa-home"></i>
+        </a>
+        <button class="control-btn" onclick="toggleLanguage()" title="Змінити мову" id="langBtn">🇺🇦</button>
+    </div>
+    
+    <div class="calculator-container">
+        <div class="calc-header">
+            <h1><i class="fas fa-bomb"></i> <span id="title">Demining Calculator</span></h1>
+            <p id="subtitle">Розрахунок вартості розмінування території</p>
+        </div>
+
+        <div class="tab-content">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" id="distance-label">Відстань до об'єкта (км)</label>
+                    <input type="number" class="form-control" id="demining-distance" step="0.1" placeholder="0.0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="area-label">Площа розмінування (га)</label>
+                    <input type="number" class="form-control" id="demining-area" step="0.1" placeholder="0.0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="complexity-label">Складність території</label>
+                    <select class="form-control" id="terrain-difficulty">
+                        <option value="0" id="complexity-min">Мінімальна</option>
+                        <option value="10" id="complexity-easy">Легка</option>
+                        <option value="25" id="complexity-medium">Середня</option>
+                        <option value="40" id="complexity-hard">Важка</option>
+                        <option value="50" id="complexity-critical">Критична</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="slope-label">Нахил території (градуси)</label>
+                    <select class="form-control" id="slope-angle">
+                        <option value="0" id="slope-low">0-15°</option>
+                        <option value="10" id="slope-medium">15-40°</option>
+                        <option value="30" id="slope-high">40-90°</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="depth-label">Глибина розмінування (см)</label>
+                    <input type="number" class="form-control" id="demining-depth" value="15" min="1" max="200">
+                    <small style="color: var(--text-secondary); margin-top: 5px; display: block;" id="depth-note">Стандарт: 15 см. Понад 15 см: +3% за кожен см</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="fuel-price-label">Вартість палива (грн/л)</label>
+                    <input type="number" class="form-control" id="fuel-price" value="65" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="fuel-consumption-label">Розхід палива (л/100км)</label>
+                    <input type="number" class="form-control" id="fuel-consumption" value="17" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="trips-label">Кількість виїздів</label>
+                    <input type="number" class="form-control" id="trips-count" value="1" min="1">
+                    <small style="color: var(--text-secondary); margin-top: 5px; display: block;" id="trips-note">1 виїзд = туди та назад (подвійна відстань)</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" id="urgency-label-top">Терміновість</label>
+                    <div class="form-control" style="display: flex; align-items: center;">
+                        <input type="checkbox" id="demining-urgent" style="width: 20px; height: 20px; margin: 0 10px 0 0;">
+                        <label for="demining-urgent" id="urgency-label" style="color: var(--text-primary); cursor: pointer; margin: 0;">Терміновість</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="calculateDemining()">
+                    <i class="fas fa-calculator"></i> <span id="calc-btn">Розрахувати</span>
+                </button>
+                <button class="btn btn-secondary" onclick="showCoefficients()">
+                    <i class="fas fa-cog"></i> <span id="coeff-btn">Коефіцієнти</span>
+                </button>
+                <button class="btn btn-secondary" onclick="openRouteCalculator()">
+                    <i class="fas fa-route"></i> <span id="route-btn">Розрахунок маршруту</span>
+                </button>
+                <button class="btn btn-secondary" onclick="exportPDF()" id="exportBtn" style="display: none;">
+                    <i class="fas fa-file-pdf"></i> <span id="export-btn">Експорт PDF</span>
+                </button>
+            </div>
+            
+            <div id="demining-result" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let lastCalculation = null;
+        
+        function generateFormula(area, baseCostPerHa, difficulty, slopeAngle, depth, urgent, totalCost, distance, fuelConsumption, fuelPrice, tripsCount, roadCost) {
+            const lang = localStorage.getItem('language') || 'uk';
+            const formulas = {
+                uk: `Формула: (${area} га × ${baseCostPerHa} грн/га) + ${difficulty}% складність + ${slopeAngle}% нахил + ${depth > 15 ? (depth - 15) * 3 : 0}% глибина + паливо(${distance}км × ${fuelConsumption}/100 × ${fuelPrice}грн/л × 2 × ${tripsCount} = ${roadCost.toFixed(2)}грн)${urgent ? ' + 20% терміновість' : ''} = ${totalCost.toFixed(2)} грн`,
+                en: `Formula: (${area} ha × ${baseCostPerHa} UAH/ha) + ${difficulty}% complexity + ${slopeAngle}% slope + ${depth > 15 ? (depth - 15) * 3 : 0}% depth + fuel(${distance}km × ${fuelConsumption}/100 × ${fuelPrice}UAH/l × 2 × ${tripsCount} = ${roadCost.toFixed(2)}UAH)${urgent ? ' + 20% urgency' : ''} = ${totalCost.toFixed(2)} UAH`,
+                fr: `Formule: (${area} ha × ${baseCostPerHa} UAH/ha) + ${difficulty}% complexité + ${slopeAngle}% pente + ${depth > 15 ? (depth - 15) * 3 : 0}% profondeur + carburant(${distance}km × ${fuelConsumption}/100 × ${fuelPrice}UAH/l × 2 × ${tripsCount} = ${roadCost.toFixed(2)}UAH)${urgent ? ' + 20% urgence' : ''} = ${totalCost.toFixed(2)} UAH`
+            };
+            return formulas[lang];
+        }
+        
+        function calculateDemining() {
+            const distance = parseFloat(document.getElementById('demining-distance').value) || 0;
+            const area = parseFloat(document.getElementById('demining-area').value) || 0;
+            const difficulty = parseFloat(document.getElementById('terrain-difficulty').value) || 0;
+            const slopeAngle = parseFloat(document.getElementById('slope-angle').value) || 0;
+            const depth = parseFloat(document.getElementById('demining-depth').value) || 15;
+            const fuelPrice = parseFloat(document.getElementById('fuel-price').value) || 65;
+            const fuelConsumption = parseFloat(document.getElementById('fuel-consumption').value) || 17;
+            const tripsCount = parseInt(document.getElementById('trips-count').value) || 1;
+            const urgent = document.getElementById('demining-urgent').checked;
+            
+            // Завантажуємо збережені коефіцієнти
+            const baseCostPerHa = parseFloat(localStorage.getItem('demining_baseCost')) || 80000;
+            const urgencyPercent = parseFloat(localStorage.getItem('demining_urgency')) || 20;
+            const depthCostPercent = parseFloat(localStorage.getItem('demining_depthCost')) || 3;
+            
+            const baseCost = area * baseCostPerHa;
+            const difficultyCost = baseCost * (difficulty / 100);
+            const slopeCost = baseCost * (slopeAngle / 100);
+            const depthCost = depth > 15 ? baseCost * ((depth - 15) * depthCostPercent / 100) : 0;
+            const roadCost = distance * (fuelConsumption / 100) * fuelPrice * 2 * tripsCount;
+            
+            let subtotal = baseCost + difficultyCost + slopeCost + depthCost + roadCost;
+            const urgentCost = urgent ? subtotal * (urgencyPercent / 100) : 0;
+            const totalCost = subtotal + urgentCost;
+            
+            const lang = localStorage.getItem('language') || 'uk';
+            
+            lastCalculation = {
+                type: 'Demining',
+                distance, area, difficulty, fuelPrice, fuelConsumption, tripsCount, urgent,
+                baseCost, roadCost, urgentCost, totalCost,
+                timestamp: new Date().toLocaleString(),
+                formula: generateFormula(area, baseCostPerHa, difficulty, slopeAngle, depth, urgent, totalCost, distance, fuelConsumption, fuelPrice, tripsCount, roadCost)
+            };
+            
+            const difficultyText = {
+                1: 'Легка',
+                1.5: 'Середня', 
+                2: 'Важка'
+            };
+            const resultTexts = {
+                uk: {
+                    title: `Вартість розмінування: ${totalCost.toFixed(2)} грн`,
+                    formula: '📊 Формула розрахунку:',
+                    demining: 'Розмінування',
+                    road: 'Дорога',
+                    urgency: 'Терміновість',
+                    area: 'Площа',
+                    slope: 'Нахил',
+                    depth: 'Глибина',
+                    distance: 'Відстань',
+                    currency: 'грн',
+                    units: { ha: 'га', cm: 'см', km: 'км' }
+                },
+                en: {
+                    title: `Demining cost: ${totalCost.toFixed(2)} UAH`,
+                    formula: '📊 Calculation formula:',
+                    demining: 'Demining',
+                    road: 'Transport',
+                    urgency: 'Urgency',
+                    area: 'Area',
+                    slope: 'Slope',
+                    depth: 'Depth',
+                    distance: 'Distance',
+                    currency: 'UAH',
+                    units: { ha: 'ha', cm: 'cm', km: 'km' }
+                },
+                fr: {
+                    title: `Coût de déminage: ${totalCost.toFixed(2)} UAH`,
+                    formula: '📊 Formule de calcul:',
+                    demining: 'Déminage',
+                    road: 'Transport',
+                    urgency: 'Urgence',
+                    area: 'Zone',
+                    slope: 'Pente',
+                    depth: 'Profondeur',
+                    distance: 'Distance',
+                    currency: 'UAH',
+                    units: { ha: 'ha', cm: 'cm', km: 'km' }
+                }
+            };
+            
+            const t = resultTexts[lang];
+            
+            document.getElementById('demining-result').innerHTML = `
+                <div class="result-card">
+                    <div class="result-title">${t.title}</div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin: 15px 0; font-family: monospace; font-size: 0.9rem;">
+                        <strong>${t.formula}</strong><br>
+                        ${lastCalculation.formula}
+                    </div>
+                    <div class="result-details">
+                        <div class="detail-item">
+                            <strong>${t.demining} (фінально)</strong><br>
+                            ${(baseCost + difficultyCost + slopeCost + depthCost + urgentCost).toFixed(2)} ${t.currency}
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.road} (фінально)</strong><br>
+                            ${roadCost.toFixed(2)} ${t.currency}
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.urgency}</strong><br>
+                            ${urgentCost.toFixed(2)} ${t.currency}
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.area}</strong><br>
+                            ${area} ${t.units.ha}
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.slope}</strong><br>
+                            ${slopeAngle}%
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.depth}</strong><br>
+                            ${depth} ${t.units.cm}
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.distance}</strong><br>
+                            ${distance} ${t.units.km}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('demining-result').style.display = 'block';
+            document.getElementById('exportBtn').style.display = 'inline-flex';
+        }
+
+        function exportPDF() {
+            if (!lastCalculation) {
+                const alertTexts = {
+                    uk: 'Спочатку виконайте розрахунок',
+                    en: 'Please perform calculation first',
+                    fr: 'Veuillez d\'abord effectuer le calcul'
+                };
+                const lang = localStorage.getItem('language') || 'uk';
+                alert(alertTexts[lang] || alertTexts.en);
+                return;
+            }
+            
+            const promptTexts = {
+                uk: 'Введіть назву організації:',
+                en: 'Enter organization name:',
+                fr: 'Entrez le nom de l\'organisation:'
+            };
+            
+            const lang = localStorage.getItem('language') || 'uk';
+            const orgName = prompt(promptTexts[lang] || promptTexts.en, 'Territory Demining Services');
+            if (!orgName) return;
+            
+            const managerName = prompt('Enter manager name:', 'John Smith');
+            if (!managerName) return;
+            
+            const managerPosition = prompt('Enter position:', 'Director');
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Enable UTF-8 support
+            doc.setFont('helvetica');
+            doc.setCharSpace(0.1);
+            
+            // Простий PDF без спеціальних шрифтів
+            
+            // Фон та рамка
+            doc.setFillColor(240, 240, 240);
+            doc.rect(0, 0, 210, 297, 'F');
+            doc.setDrawColor(200, 0, 0);
+            doc.setLineWidth(2);
+            doc.rect(10, 10, 190, 277);
+            
+            // Заголовок
+            doc.setFillColor(200, 0, 0);
+            doc.rect(15, 15, 180, 25, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            const pdfTexts = {
+                uk: {
+                    title: 'COMMERCIAL PROPOSAL',
+                    date: 'Date:',
+                    proposal: 'Proposal No:',
+                    params: 'PROJECT PARAMETERS:',
+                    area: 'Demining area:',
+                    distance: 'Distance to object:',
+                    complexity: 'Territory complexity:',
+                    trips: 'Number of trips:',
+                    urgency: 'Urgency:',
+                    yes: 'Yes',
+                    no: 'No',
+                    cost: 'COST CALCULATION:',
+                    service: 'Service Description',
+                    price: 'Cost (UAH)',
+                    demining: 'Main demining operations',
+                    transport: 'Logistics and transport',
+                    total: 'TOTAL COST:',
+                    valid: 'This proposal is valid for 30 days',
+                    manager: 'Project Manager:',
+                    signature: 'Signature:',
+                    currency: 'UAH'
+                },
+                en: {
+                    title: 'COMMERCIAL PROPOSAL',
+                    date: 'Date:',
+                    proposal: 'Proposal No:',
+                    params: 'PROJECT PARAMETERS:',
+                    area: 'Demining area:',
+                    distance: 'Distance to object:',
+                    complexity: 'Territory complexity:',
+                    trips: 'Number of trips:',
+                    urgency: 'Urgency:',
+                    yes: 'Yes',
+                    no: 'No',
+                    cost: 'COST CALCULATION:',
+                    service: 'Service Description',
+                    price: 'Cost (UAH)',
+                    demining: 'Main demining operations',
+                    transport: 'Logistics and transport',
+                    total: 'TOTAL COST:',
+                    valid: 'This proposal is valid for 30 days',
+                    manager: 'Project Manager:',
+                    signature: 'Signature:',
+                    currency: 'UAH'
+                },
+                fr: {
+                    title: 'PROPOSITION COMMERCIALE',
+                    date: 'Date:',
+                    proposal: 'Proposition No:',
+                    params: 'PARAMÈTRES DU PROJET:',
+                    area: 'Zone de déminage:',
+                    distance: 'Distance à l\'objet:',
+                    complexity: 'Complexité du territoire:',
+                    trips: 'Nombre de voyages:',
+                    urgency: 'Urgence:',
+                    yes: 'Oui',
+                    no: 'Non',
+                    cost: 'CALCUL DU COÛT:',
+                    service: 'Description du service',
+                    price: 'Coût (UAH)',
+                    demining: 'Opérations principales de déminage',
+                    transport: 'Logistique et transport',
+                    total: 'COÛT TOTAL:',
+                    valid: 'Cette proposition est valide pendant 30 jours',
+                    manager: 'Chef de projet:',
+                    signature: 'Signature:',
+                    currency: 'UAH'
+                }
+            };
+            
+            const t = pdfTexts[lang];
+            
+            doc.text(t.title, 105, 30, { align: 'center' });
+            doc.setFontSize(14);
+            doc.text(orgName, 105, 35, { align: 'center' });
+            
+            // Інформація про компанію
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(t.date + ' ' + lastCalculation.timestamp, 20, 55);
+            doc.text(t.proposal + ' DM-' + Date.now().toString().slice(-6), 120, 55);
+            
+            // Параметри робот
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(t.params, 20, 75);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            let y = 85;
+            doc.text(`${t.area} ${lastCalculation.area} ha`, 25, y);
+            y += 8;
+            doc.text(`${t.distance} ${lastCalculation.distance} km`, 25, y);
+            y += 8;
+            doc.text(`${t.complexity} ${lastCalculation.difficulty}%`, 25, y);
+            y += 8;
+            doc.text(`${t.trips} ${lastCalculation.tripsCount}`, 25, y);
+            y += 8;
+            doc.text(`${t.urgency} ${lastCalculation.urgent ? t.yes : t.no}`, 25, y);
+            
+            // Розрахунок вартості
+            y += 20;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text('COST CALCULATION:', 20, y);
+            
+            // Таблиця
+            y += 10;
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.5);
+            
+            // Заголовки таблиці
+            doc.setFillColor(230, 230, 230);
+            doc.rect(20, y, 120, 8, 'FD');
+            doc.rect(140, y, 50, 8, 'FD');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text('Service Description', 25, y + 5);
+            doc.text('Cost (UAH)', 145, y + 5);
+            
+            // Рядки таблиці
+            y += 8;
+            doc.setFont('helvetica', 'normal');
+            const rows = [];
+            if (lastCalculation.baseCost > 0) {
+                rows.push([t.demining, lastCalculation.baseCost.toFixed(2)]);
+            }
+            if (lastCalculation.roadCost > 0) {
+                rows.push([t.transport, lastCalculation.roadCost.toFixed(2)]);
+            }
+            if (lastCalculation.urgentCost > 0) {
+                rows.push(['Urgency surcharge', lastCalculation.urgentCost.toFixed(2)]);
+            }
+            
+            rows.forEach(row => {
+                doc.rect(20, y, 120, 8, 'D');
+                doc.rect(140, y, 50, 8, 'D');
+                doc.text(row[0], 25, y + 5);
+                doc.text(row[1], 165, y + 5, { align: 'right' });
+                y += 8;
+            });
+            
+            // Підсумок
+            doc.setFillColor(200, 0, 0);
+            doc.rect(20, y, 170, 10, 'FD');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(t.total, 25, y + 7);
+            doc.text(lastCalculation.totalCost.toFixed(2) + ' ' + t.currency, 165, y + 7, { align: 'right' });
+            
+            // Підпис
+            y += 30;
+            doc.setTextColor(0, 0, 0);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(t.valid, 20, y);
+            y += 20;
+            doc.text(`${managerPosition} ${orgName}: ${managerName}`, 20, y);
+            doc.text(t.signature + ' ________________', 120, y);
+            
+            doc.save(`Demining_Proposal_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+        
+        // Theme handling
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme || 'dark');
+        }
+        
+        // Theme handling
+        function applyTheme(theme) {
+            // Новий дизайн завжди використовує червоні акценти
+        }
+        
+        // Listen for theme changes
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'themeChange') {
+                applyTheme(event.data.theme);
+            }
+        });
+        
+        const translations = {
+            uk: {
+                'title': 'Demining Calculator',
+                'subtitle': 'Розрахунок вартості розмінування території',
+                'distance-label': 'Відстань до об\'єкта (км)',
+                'area-label': 'Площа розмінування (га)',
+                'complexity-label': 'Складність території',
+                'complexity-min': 'Мінімальна',
+                'complexity-easy': 'Легка',
+                'complexity-medium': 'Середня',
+                'complexity-hard': 'Важка',
+                'complexity-critical': 'Критична',
+                'slope-label': 'Нахил території (градуси)',
+                'depth-label': 'Глибина розмінування (см)',
+                'depth-note': 'Стандарт: 15 см. Понад 15 см: +3% за кожен см',
+                'urgency-label': 'Терміновість',
+                'fuel-price-label': 'Вартість палива (грн/л)',
+                'fuel-consumption-label': 'Розхід палива (л/100км)',
+                'trips-label': 'Кількість виїздів',
+                'trips-note': '1 виїзд = туди та назад (подвійна відстань)',
+                'calc-btn': 'Розрахувати',
+                'coeff-btn': 'Коефіцієнти',
+                'route-btn': 'Розрахунок маршруту',
+                'export-btn': 'Експорт PDF',
+                'close-btn': 'Закрити',
+                'urgency-label-top': 'Терміновість',
+                'urgency-label': 'Терміновість'
+            },
+            en: {
+                'title': 'Demining Calculator',
+                'subtitle': 'Territory demining cost calculation',
+                'distance-label': 'Distance to object (km)',
+                'area-label': 'Demining area (ha)',
+                'complexity-label': 'Territory complexity',
+                'complexity-min': 'Minimal',
+                'complexity-easy': 'Easy',
+                'complexity-medium': 'Medium',
+                'complexity-hard': 'Hard',
+                'complexity-critical': 'Critical',
+                'slope-label': 'Territory slope (degrees)',
+                'depth-label': 'Demining depth (cm)',
+                'depth-note': 'Standard: 15 cm. Over 15 cm: +3% per cm',
+                'urgency-label': 'Urgency',
+                'fuel-price-label': 'Fuel price (UAH/l)',
+                'fuel-consumption-label': 'Fuel consumption (l/100km)',
+                'trips-label': 'Number of trips',
+                'trips-note': '1 trip = there and back (double distance)',
+                'calc-btn': 'Calculate',
+                'coeff-btn': 'Coefficients',
+                'route-btn': 'Route Calculator',
+                'export-btn': 'Export PDF',
+                'close-btn': 'Close',
+                'urgency-label-top': 'Urgency',
+                'urgency-label': 'Urgency'
+            },
+            fr: {
+                'title': 'Calculatrice de Déminage',
+                'subtitle': 'Calcul du coût de déminage de territoire',
+                'distance-label': 'Distance à l\'objet (km)',
+                'area-label': 'Zone de déminage (ha)',
+                'complexity-label': 'Complexité du territoire',
+                'complexity-min': 'Minimale',
+                'complexity-easy': 'Facile',
+                'complexity-medium': 'Moyenne',
+                'complexity-hard': 'Difficile',
+                'complexity-critical': 'Critique',
+                'slope-label': 'Pente du territoire (degrés)',
+                'depth-label': 'Profondeur de déminage (cm)',
+                'depth-note': 'Standard: 15 cm. Plus de 15 cm: +3% par cm',
+                'urgency-label': 'Urgence',
+                'fuel-price-label': 'Prix du carburant (UAH/l)',
+                'fuel-consumption-label': 'Consommation de carburant (l/100km)',
+                'trips-label': 'Nombre de voyages',
+                'trips-note': '1 voyage = aller-retour (double distance)',
+                'calc-btn': 'Calculer',
+                'coeff-btn': 'Coefficients',
+                'route-btn': 'Calculateur d\'Itinéraire',
+                'export-btn': 'Exporter PDF',
+                'close-btn': 'Fermer',
+                'urgency-label-top': 'Urgence',
+                'urgency-label': 'Urgence'
+            }
+        };
+
+        function setLanguage(lang) {
+            const translation = translations[lang];
+            for (const [key, value] of Object.entries(translation)) {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = value;
+                }
+            }
+            // Update data-translate elements
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (translation[key]) {
+                    el.textContent = translation[key];
+                }
+            });
+            localStorage.setItem('language', lang);
+            updateLanguageButton(lang);
+        }
+        
+        function toggleLanguage() {
+            const currentLang = localStorage.getItem('language') || 'uk';
+            const languages = ['uk', 'en', 'fr'];
+            const currentIndex = languages.indexOf(currentLang);
+            const nextIndex = (currentIndex + 1) % languages.length;
+            setLanguage(languages[nextIndex]);
+        }
+        
+        function updateLanguageButton(lang) {
+            const flags = { uk: '🇺🇦', en: '🇺🇸', fr: '🇫🇷' };
+            const btn = document.getElementById('langBtn');
+            if (btn) btn.textContent = flags[lang] || flags.uk;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedLang = localStorage.getItem('language') || 'uk';
+            setLanguage(savedLang);
+            
+            // Load saved values
+            const savedDistance = localStorage.getItem('demining_distance');
+            const savedArea = localStorage.getItem('demining_area');
+            const savedFuelPrice = localStorage.getItem('demining_fuelPrice');
+            const savedFuelConsumption = localStorage.getItem('demining_fuelConsumption');
+            const savedTrips = localStorage.getItem('demining_trips');
+            const savedDepth = localStorage.getItem('demining_depth');
+            
+            if (savedDistance) document.getElementById('demining-distance').value = savedDistance;
+            if (savedArea) document.getElementById('demining-area').value = savedArea;
+            if (savedFuelPrice) document.getElementById('fuel-price').value = savedFuelPrice;
+            if (savedFuelConsumption) document.getElementById('fuel-consumption').value = savedFuelConsumption;
+            if (savedTrips) document.getElementById('trips-count').value = savedTrips;
+            if (savedDepth) document.getElementById('demining-depth').value = savedDepth;
+            
+            // Load saved urgency coefficient
+            const savedUrgency = localStorage.getItem('demining_urgency') || '20';
+            const urgencyLabel = document.getElementById('urgencyLabel');
+            if (urgencyLabel) {
+                urgencyLabel.textContent = 'Терміновість';
+            }
+        });
+        
+        // Save values when they change
+        function saveValues() {
+            localStorage.setItem('demining_distance', document.getElementById('demining-distance').value);
+            localStorage.setItem('demining_area', document.getElementById('demining-area').value);
+            localStorage.setItem('demining_fuelPrice', document.getElementById('fuel-price').value);
+            localStorage.setItem('demining_fuelConsumption', document.getElementById('fuel-consumption').value);
+            localStorage.setItem('demining_trips', document.getElementById('trips-count').value);
+            localStorage.setItem('demining_depth', document.getElementById('demining-depth').value);
+        }
+        
+        // Add event listeners to save on change
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = ['demining-distance', 'demining-area', 'fuel-price', 'fuel-consumption', 'trips-count', 'demining-depth'];
+            inputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', saveValues);
+                    element.addEventListener('change', saveValues);
+                }
+            });
+        });
+    </script>
+    
+    <!-- Load route component -->
+    <div id="routeComponent"></div>
+    <script>
+        function showRouteModal(distanceFieldId) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            
+            modal.innerHTML = `
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 15px; padding: 20px; max-width: 500px; width: 90%;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px;"><i class="fas fa-route"></i> Розрахунок маршруту</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="color: var(--text-primary); display: block; margin-bottom: 5px;">Початкова точка:</label>
+                        <input type="text" id="startPoint" placeholder="Наприклад: Київ" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="color: var(--text-primary); display: block; margin-bottom: 5px;">Кінцева точка:</label>
+                        <input type="text" id="endPoint" placeholder="Наприклад: Львів" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                    </div>
+                    
+                    <div id="additionalPoints"></div>
+                    
+                    <button onclick="addPoint()" style="width: 100%; padding: 8px; background: transparent; border: 1px dashed var(--border); color: var(--text-primary); border-radius: 5px; cursor: pointer; margin-bottom: 15px;">
+                        <i class="fas fa-plus"></i> Додати точку
+                    </button>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="calculateRoute('${distanceFieldId}')" style="flex: 1; padding: 10px; background: var(--primary); color: #000; border: none; border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-calculator"></i> Розрахувати
+                        </button>
+                        <button onclick="closeRouteModal()" style="padding: 10px 20px; background: transparent; border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="routeResult" style="margin-top: 15px; display: none;"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.currentRouteModal = modal;
+        }
+        
+        function openRouteCalculator() {
+            window.targetDistanceField = 'demining-distance';
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center;';
+            
+            const lang = localStorage.getItem('language') || 'uk';
+            const closeTexts = { uk: 'Закрити', en: 'Close', fr: 'Fermer' };
+            
+            modal.innerHTML = `
+                <div style="background: var(--bg-primary); border: 2px solid var(--primary); border-radius: 20px; width: 95%; height: 90%; position: relative;">
+                    <div style="position: absolute; top: 15px; right: 80px; z-index: 2001;">
+                        <button onclick="closeRouteModal()" style="background: var(--gradient); color: #000; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                            <i class="fas fa-times"></i> ${closeTexts[lang]}
+                        </button>
+                    </div>
+                    <iframe src="route_calculator_mini.html" style="width: 100%; height: 100%; border: none; border-radius: 20px;" onload="this.contentWindow.postMessage({type: 'setLanguage', language: localStorage.getItem('language') || 'uk'}, '*')"></iframe>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.currentRouteModal = modal;
+        }
+        
+        function closeRouteModal() {
+            if (window.currentRouteModal) {
+                window.currentRouteModal.remove();
+                window.currentRouteModal = null;
+            }
+        }
+        
+        // Listen for route distance from calculator
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'routeDistance') {
+                if (window.targetDistanceField) {
+                    document.getElementById(window.targetDistanceField).value = event.data.distance;
+                    window.targetDistanceField = null;
+                } else {
+                    document.getElementById('demining-distance').value = event.data.distance;
+                }
+                closeRouteModal();
+            }
+        });
+        
+        let pointCounter = 0;
+        
+        function addPoint() {
+            pointCounter++;
+            const pointsContainer = document.getElementById('additionalPoints');
+            const pointDiv = document.createElement('div');
+            pointDiv.style.cssText = 'margin-bottom: 15px; display: flex; gap: 10px; align-items: center;';
+            pointDiv.innerHTML = `
+                <input type="text" id="point${pointCounter}" placeholder="Проміжна точка ${pointCounter}" style="flex: 1; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                <button onclick="removePoint(this)" style="padding: 10px; background: transparent; border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; cursor: pointer;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            pointsContainer.appendChild(pointDiv);
+        }
+        
+        function removePoint(button) {
+            button.parentElement.remove();
+        }
+        
+        function closeRouteModal() {
+            if (window.currentRouteModal) {
+                window.currentRouteModal.remove();
+                window.currentRouteModal = null;
+                pointCounter = 0;
+            }
+        }
+        
+        function showCoefficients() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center;';
+            
+            const currentBase = localStorage.getItem('demining_baseCost') || '80000';
+            const currentUrgency = localStorage.getItem('demining_urgency') || '20';
+            const currentDepthCost = localStorage.getItem('demining_depthCost') || '3';
+            
+            const difficultyCoeffs = JSON.parse(localStorage.getItem('demining_difficultyCoeffs') || '{"0":"0","10":"10","25":"25","40":"40","50":"50"}');
+            const slopeCoeffs = JSON.parse(localStorage.getItem('demining_slopeCoeffs') || '{"0":"0","10":"10","30":"30"}');
+            
+            const lang = localStorage.getItem('language') || 'uk';
+            const coeffTexts = {
+                uk: {
+                    title: 'Налаштування коефіцієнтів DEMINING',
+                    baseCost: 'Базова вартість (грн/га):',
+                    urgency: 'Терміновість (%):',
+                    depth: 'Глибина (% за см):',
+                    complexityTitle: 'Коефіцієнти складності території (%):',
+                    slopeTitle: 'Коефіцієнти нахилу території (%):',
+                    save: 'Зберегти',
+                    close: 'Закрити'
+                },
+                en: {
+                    title: 'DEMINING Coefficients Settings',
+                    baseCost: 'Base cost (UAH/ha):',
+                    urgency: 'Urgency (%):',
+                    depth: 'Depth (% per cm):',
+                    complexityTitle: 'Territory complexity coefficients (%):',
+                    slopeTitle: 'Territory slope coefficients (%):',
+                    save: 'Save',
+                    close: 'Close'
+                },
+                fr: {
+                    title: 'Paramètres des coefficients DEMINING',
+                    baseCost: 'Coût de base (UAH/ha):',
+                    urgency: 'Urgence (%):',
+                    depth: 'Profondeur (% par cm):',
+                    complexityTitle: 'Coefficients de complexité du territoire (%):',
+                    slopeTitle: 'Coefficients de pente du territoire (%):',
+                    save: 'Sauvegarder',
+                    close: 'Fermer'
+                }
+            };
+            
+            modal.innerHTML = `
+                <div style="background: var(--bg-secondary); border: 2px solid var(--primary); border-radius: 20px; padding: 30px; max-width: 800px; width: 95%; color: var(--text-primary); max-height: 90vh; overflow-y: auto;">
+                    <h3 style="color: var(--primary); margin-bottom: 20px; text-align: center;"><i class="fas fa-cog"></i> ${coeffTexts[lang].title}</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label style="color: var(--text-primary); display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem;">${coeffTexts[lang].baseCost}</label>
+                            <input type="number" id="baseCostCoeff" value="${currentBase}" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-primary); display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem;">${coeffTexts[lang].urgency}</label>
+                            <input type="number" id="urgencyCoeff" value="${currentUrgency}" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-primary); display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem;">${coeffTexts[lang].depth}</label>
+                            <input type="number" id="depthCostCoeff" value="${currentDepthCost}" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.9rem;">
+                        </div>
+                    </div>
+                    
+                    <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 1.1rem;">${coeffTexts[lang].complexityTitle}</h4>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;">
+                        <div>
+                            <label style="color: var(--text-secondary); display: block; margin-bottom: 5px; font-size: 0.8rem;">Мінімальна:</label>
+                            <input type="number" id="difficultyMin" value="${difficultyCoeffs[0]}" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.8rem;">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); display: block; margin-bottom: 5px; font-size: 0.8rem;">Легка:</label>
+                            <input type="number" id="difficultyEasy" value="${difficultyCoeffs[10]}" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.8rem;">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); display: block; margin-bottom: 5px; font-size: 0.8rem;">Середня:</label>
+                            <input type="number" id="difficultyMedium" value="${difficultyCoeffs[25]}" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.8rem;">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); display: block; margin-bottom: 5px; font-size: 0.8rem;">Важка:</label>
+                            <input type="number" id="difficultyHard" value="${difficultyCoeffs[40]}" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.8rem;">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); display: block; margin-bottom: 5px; font-size: 0.8rem;">Критична:</label>
+                            <input type="number" id="difficultyCritical" value="${difficultyCoeffs[50]}" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.8rem;">
+                        </div>
+                    </div>
+                    
+                    <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 1.1rem;">${coeffTexts[lang].slopeTitle}</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label style="color: var(--text-secondary); display: block; margin-bottom: 5px; font-size: 0.9rem;">0-15°:</label>
+                            <input type="number" id="slopeFlat" value="${slopeCoeffs[0]}" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); display: block; margin-bottom: 5px; font-size: 0.9rem;">15-40°:</label>
+                            <input type="number" id="slopeMedium" value="${slopeCoeffs[10]}" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-secondary); display: block; margin-bottom: 5px; font-size: 0.9rem;">40-90°:</label>
+                            <input type="number" id="slopeSteep" value="${slopeCoeffs[30]}" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px; font-size: 0.9rem;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; margin-top: 25px;">
+                        <button onclick="saveDeminingCoefficients()" class="btn btn-primary" style="flex: 1; padding: 12px; background: var(--gradient); color: #000; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-family: 'Times New Roman', serif;">
+                            <i class="fas fa-save"></i> ${coeffTexts[lang].save}
+                        </button>
+                        <button onclick="closeCoefficientsModal()" class="btn btn-secondary" style="padding: 12px 20px; background: transparent; border: 2px solid var(--primary); color: var(--primary); border-radius: 10px; cursor: pointer; font-weight: bold; font-family: 'Times New Roman', serif;">
+                            <i class="fas fa-times"></i> ${coeffTexts[lang].close}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.currentCoeffModal = modal;
+        }
+        
+        function saveDeminingCoefficients() {
+            // Основні коефіцієнти
+            const baseCost = document.getElementById('baseCostCoeff').value;
+            const urgency = document.getElementById('urgencyCoeff').value;
+            const depthCost = document.getElementById('depthCostCoeff').value;
+            
+            // Коефіцієнти складності
+            const difficultyCoeffs = {
+                0: document.getElementById('difficultyMin').value,
+                10: document.getElementById('difficultyEasy').value,
+                25: document.getElementById('difficultyMedium').value,
+                40: document.getElementById('difficultyHard').value,
+                50: document.getElementById('difficultyCritical').value
+            };
+            
+            // Коефіцієнти нахилу
+            const slopeCoeffs = {
+                0: document.getElementById('slopeFlat').value,
+                10: document.getElementById('slopeMedium').value,
+                30: document.getElementById('slopeSteep').value
+            };
+            
+            // Зберігаємо все
+            localStorage.setItem('demining_baseCost', baseCost);
+            localStorage.setItem('demining_urgency', urgency);
+            localStorage.setItem('demining_depthCost', depthCost);
+            localStorage.setItem('demining_difficultyCoeffs', JSON.stringify(difficultyCoeffs));
+            localStorage.setItem('demining_slopeCoeffs', JSON.stringify(slopeCoeffs));
+            
+            // Оновлюємо підпис терміновості
+            const urgencyLabel = document.getElementById('urgencyLabel');
+            if (urgencyLabel) {
+                urgencyLabel.textContent = 'Терміновість';
+            }
+            
+            alert('Коефіцієнти збережено!');
+            closeCoefficientsModal();
+        }
+        
+        function closeCoefficientsModal() {
+            if (window.currentCoeffModal) {
+                window.currentCoeffModal.remove();
+                window.currentCoeffModal = null;
+            }
+        }
+    </script>
+</body>
+</html>

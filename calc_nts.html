@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NTS Калькулятор</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .language-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .lang-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--primary);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-family: 'Times New Roman', serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 0, 64, 0.2);
+        }
+        
+        .top-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ff0040;
+            background: #000;
+            color: #ff0040;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-family: 'Times New Roman', serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 0, 64, 0.2);
+        }
+        
+        .control-btn:hover {
+            background: #ff0040;
+            color: #000;
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(255, 0, 64, 0.4);
+        }
+        
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            width: 45px;
+            height: 45px;
+            border: 2px solid var(--primary);
+            background: var(--bg-secondary);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 20px;
+            font-family: 'Times New Roman', serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 0, 64, 0.2);
+        }
+        
+        .home-btn:hover {
+            background: var(--primary);
+            color: #000;
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(255, 0, 64, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="top-controls">
+        <a href="index.html" class="control-btn" title="Головне меню">
+            <i class="fas fa-home"></i>
+        </a>
+        <button class="control-btn" onclick="toggleLanguage()" title="Змінити мову" id="langBtn">🇺🇦</button>
+    </div>
+    
+    <div class="calculator-container">
+        <div class="calc-header">
+            <h1><i class="fas fa-search"></i> <span id="title">NTS Калькулятор</span></h1>
+            <p id="subtitle">Розрахунок вартості нетехнічного обстеження</p>
+        </div>
+
+        <div class="tab-content">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" id="area-label">Площа обстеження (га)</label>
+                    <input type="number" class="form-control" id="area" step="0.1" placeholder="100">
+                </div>
+                
+
+                
+                <div class="form-group">
+                    <label class="form-label" id="distance-label">Відстань до об'єкта (км)</label>
+                    <input type="number" class="form-control" id="distance" step="0.1" placeholder="50">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" id="complexity-label">Коефіцієнт складності</label>
+                    <select class="form-control" id="complexity">
+                        <option value="0" id="complexity-low">Низька</option>
+                        <option value="20" id="complexity-medium">Середня</option>
+                        <option value="50" id="complexity-high">Висока</option>
+                        <option value="100" id="complexity-critical">Критична</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" id="fuel-price-label">Вартість палива (грн/л)</label>
+                    <input type="number" class="form-control" id="fuel-price" value="65" step="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" id="fuel-consumption-label">Розхід палива (л/100км)</label>
+                    <input type="number" class="form-control" id="fuel-consumption" value="17" step="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" id="urgency-label-top">Терміновість</label>
+                    <div class="form-control" style="display: flex; align-items: center;">
+                        <input type="checkbox" id="nts-urgent" style="width: 20px; height: 20px; margin: 0 10px 0 0;">
+                        <label for="nts-urgent" id="urgency-label" style="color: var(--text-primary); cursor: pointer; margin: 0;">Терміновість</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="calculate()">
+                    <i class="fas fa-calculator"></i> <span id="calc-btn">Розрахувати</span>
+                </button>
+                <button class="btn btn-secondary" onclick="showCoefficients()">
+                    <i class="fas fa-cog"></i> <span id="coefficients-btn">Коефіцієнти</span>
+                </button>
+                <button class="btn btn-secondary" onclick="openRouteCalculator()">
+                    <i class="fas fa-route"></i> <span id="route-btn">Розрахунок маршруту</span>
+                </button>
+                <button class="btn btn-secondary" onclick="exportPDF()" id="exportBtn" style="display: none;">
+                    <i class="fas fa-file-pdf"></i> <span id="export-btn">Експорт PDF</span>
+                </button>
+            </div>
+            
+            <div id="results" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        function openRouteCalculator() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center;';
+            
+            const lang = localStorage.getItem('language') || 'uk';
+            const closeText = translations[lang]['close'] || 'Закрити';
+            
+            modal.innerHTML = `
+                <div style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: 15px; width: 95%; height: 90%; position: relative;">
+                    <div style="position: absolute; top: 10px; right: 15px; z-index: 2001;">
+                        <button onclick="closeRouteModal()" style="background: var(--primary); color: #000; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-times"></i> ${closeText}
+                        </button>
+                    </div>
+                    <iframe src="route_calculator_mini.html" style="width: 100%; height: 100%; border: none; border-radius: 15px;" onload="this.contentWindow.postMessage({type: 'setLanguage', language: localStorage.getItem('language') || 'uk'}, '*')"></iframe>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.currentRouteModal = modal;
+        }
+        
+        function closeRouteModal() {
+            if (window.currentRouteModal) {
+                window.currentRouteModal.remove();
+                window.currentRouteModal = null;
+            }
+        }
+        
+        function exportPDF() {
+            if (!lastCalculation) {
+                const lang = localStorage.getItem('language') || 'uk';
+                const alertTexts = {
+                    uk: 'Spochatku vykonajte rozrahunok',
+                    en: 'Please perform calculation first',
+                    fr: 'Veuillez d\'abord effectuer le calcul'
+                };
+                alert(alertTexts[lang] || alertTexts.en);
+                return;
+            }
+            
+            const lang = localStorage.getItem('language') || 'uk';
+            const promptTexts = {
+                uk: 'Vvedit nazvu organizatsii:',
+                en: 'Enter organization name:',
+                fr: 'Entrez le nom de l\'organisation:'
+            };
+            
+            const orgName = prompt(promptTexts[lang] || promptTexts.en, 'NTS Survey Services');
+            if (!orgName) return;
+            
+            const managerName = prompt('Enter manager name:', 'John Smith');
+            if (!managerName) return;
+            
+            const managerPosition = prompt('Enter position:', 'Director');
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Фон та рамка
+            doc.setFillColor(240, 240, 240);
+            doc.rect(0, 0, 210, 297, 'F');
+            doc.setDrawColor(200, 0, 0);
+            doc.setLineWidth(2);
+            doc.rect(10, 10, 190, 277);
+            
+            // Заголовок
+            doc.setFillColor(200, 0, 0);
+            doc.rect(15, 15, 180, 25, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            const pdfTexts = {
+                uk: {
+                    title: 'COMMERCIAL PROPOSAL',
+                    date: 'Date:',
+                    proposal: 'Proposal No:',
+                    params: 'PROJECT PARAMETERS:',
+                    area: 'Survey area:',
+                    distance: 'Distance to object:',
+                    complexity: 'Territory complexity:',
+                    fuel: 'Fuel:',
+                    cost: 'COST CALCULATION:',
+                    service: 'Service Description',
+                    price: 'Cost (UAH)',
+                    survey: 'Non-technical survey',
+                    transport: 'Logistics and transport',
+                    total: 'TOTAL COST:',
+                    valid: 'This proposal is valid for 30 days',
+                    manager: 'Project Manager:',
+                    signature: 'Signature:',
+                    currency: 'UAH'
+                },
+                en: {
+                    title: 'COMMERCIAL PROPOSAL',
+                    date: 'Date:',
+                    proposal: 'Proposal No:',
+                    params: 'PROJECT PARAMETERS:',
+                    area: 'Survey area:',
+                    distance: 'Distance to object:',
+                    complexity: 'Territory complexity:',
+                    fuel: 'Fuel:',
+                    cost: 'COST CALCULATION:',
+                    service: 'Service Description',
+                    price: 'Cost (UAH)',
+                    survey: 'Non-technical survey',
+                    transport: 'Logistics and transport',
+                    total: 'TOTAL COST:',
+                    valid: 'This proposal is valid for 30 days',
+                    manager: 'Project Manager:',
+                    signature: 'Signature:',
+                    currency: 'UAH'
+                },
+                fr: {
+                    title: 'PROPOSITION COMMERCIALE',
+                    date: 'Date:',
+                    proposal: 'Proposition No:',
+                    params: 'PARAMÈTRES DU PROJET:',
+                    area: 'Zone d\'enquête:',
+                    distance: 'Distance à l\'objet:',
+                    complexity: 'Complexité du territoire:',
+                    fuel: 'Carburant:',
+                    cost: 'CALCUL DU COÛT:',
+                    service: 'Description du service',
+                    price: 'Coût (UAH)',
+                    survey: 'Enquête non technique',
+                    transport: 'Logistique et transport',
+                    total: 'COÛT TOTAL:',
+                    valid: 'Cette proposition est valide pendant 30 jours',
+                    manager: 'Chef de projet:',
+                    signature: 'Signature:',
+                    currency: 'UAH'
+                }
+            };
+            
+            const t = pdfTexts[lang];
+            
+            doc.text(t.title, 105, 30, { align: 'center' });
+            doc.setFontSize(14);
+            doc.text(orgName, 105, 35, { align: 'center' });
+            
+            // Інформація
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(t.date + ' ' + lastCalculation.timestamp, 20, 55);
+            doc.text(t.proposal + ' NTS-' + Date.now().toString().slice(-6), 120, 55);
+            
+            // Параметри
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(t.params, 20, 75);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            let y = 85;
+            doc.text(`${t.area} ${lastCalculation.area} ha`, 25, y);
+            y += 8;
+            doc.text(`${t.distance} ${lastCalculation.distance} km`, 25, y);
+            y += 8;
+            doc.text(`${t.complexity} ${lastCalculation.complexity}%`, 25, y);
+            y += 8;
+            doc.text(`${t.fuel} ${lastCalculation.fuelPrice} ${t.currency}/l, ${lastCalculation.fuelConsumption} l/100km`, 25, y);
+            
+            // Розрахунок
+            y += 20;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(t.cost, 20, y);
+            
+            y += 10;
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.5);
+            
+            // Таблиця
+            doc.setFillColor(230, 230, 230);
+            doc.rect(20, y, 120, 8, 'FD');
+            doc.rect(140, y, 50, 8, 'FD');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text(t.service, 25, y + 5);
+            doc.text(t.price, 145, y + 5);
+            
+            y += 8;
+            doc.setFont('helvetica', 'normal');
+            const complexityCost = lastCalculation.totalCost - lastCalculation.baseCost - lastCalculation.transportCost;
+            const rows = [];
+            if (lastCalculation.baseCost > 0) {
+                rows.push([t.survey, lastCalculation.baseCost.toFixed(2)]);
+            }
+            if (lastCalculation.transportCost > 0) {
+                rows.push([t.transport, lastCalculation.transportCost.toFixed(2)]);
+            }
+            if (complexityCost > 0) {
+                rows.push(['Complexity surcharge', complexityCost.toFixed(2)]);
+            }
+            
+            rows.forEach(row => {
+                doc.rect(20, y, 120, 8, 'D');
+                doc.rect(140, y, 50, 8, 'D');
+                doc.text(row[0], 25, y + 5);
+                doc.text(row[1], 165, y + 5, { align: 'right' });
+                y += 8;
+            });
+            
+            // Підсумок
+            doc.setFillColor(200, 0, 0);
+            doc.rect(20, y, 170, 10, 'FD');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(t.total, 25, y + 7);
+            doc.text(lastCalculation.totalCost.toFixed(2) + ' ' + t.currency, 165, y + 7, { align: 'right' });
+            
+            // Підпис
+            y += 30;
+            doc.setTextColor(0, 0, 0);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(t.valid, 20, y);
+            y += 20;
+            doc.text(`${managerPosition} ${orgName}: ${managerName}`, 20, y);
+            doc.text(t.signature + ' ________________', 120, y);
+            
+            doc.save(`NTS_Proposal_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+        
+        function showCoefficients() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center;';
+            
+            const lang = localStorage.getItem('language') || 'uk';
+            const coeffTexts = {
+                uk: {
+                    title: 'Налаштування коефіцієнтів NTS',
+                    baseRate: 'Базова ставка (грн/га):',
+                    workerCost: 'Вартість робітника (грн/день):',
+                    complexityTitle: 'Коефіцієнти складності (%):',
+                    low: 'Низька (+0%):',
+                    medium: 'Середня (+20%):',
+                    high: 'Висока (+50%):',
+                    critical: 'Критична (+100%):',
+                    save: 'Зберегти',
+                    close: 'Закрити'
+                },
+                en: {
+                    title: 'NTS Coefficients Settings',
+                    baseRate: 'Base rate (UAH/ha):',
+                    workerCost: 'Worker cost (UAH/day):',
+                    complexityTitle: 'Complexity coefficients (%):',
+                    low: 'Low (+0%):',
+                    medium: 'Medium (+20%):',
+                    high: 'High (+50%):',
+                    critical: 'Critical (+100%):',
+                    save: 'Save',
+                    close: 'Close'
+                },
+                fr: {
+                    title: 'Paramètres des coefficients NTS',
+                    baseRate: 'Taux de base (UAH/ha):',
+                    workerCost: 'Coût du travailleur (UAH/jour):',
+                    complexityTitle: 'Coefficients de complexité (%):',
+                    low: 'Faible (+0%):',
+                    medium: 'Moyen (+20%):',
+                    high: 'Élevé (+50%):',
+                    critical: 'Critique (+100%):',
+                    save: 'Sauvegarder',
+                    close: 'Fermer'
+                }
+            };
+            const t = coeffTexts[lang];
+            
+            modal.innerHTML = `
+                <div style="background: var(--bg-secondary); border: 2px solid var(--primary); border-radius: 15px; padding: 25px; max-width: 600px; width: 90%; color: var(--text-primary);">
+                    <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fas fa-cog"></i> ${t.title}</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px;">${t.baseRate}</label>
+                            <input type="number" id="ntsBaseRate" value="500" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px;">${t.workerCost}</label>
+                            <input type="number" id="ntsWorkerCost" value="2000" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                        </div>
+                    </div>
+                    
+                    <h4 style="margin: 20px 0 10px 0; color: var(--primary);">${t.complexityTitle}</h4>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 0.9rem;">${t.low}</label>
+                            <input type="number" value="0" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 0.9rem;">${t.medium}</label>
+                            <input type="number" value="20" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 0.9rem;">${t.high}</label>
+                            <input type="number" value="50" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 0.9rem;">${t.critical}</label>
+                            <input type="number" value="100" style="width: 100%; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 5px;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="saveNTSCoefficients()" style="flex: 1; padding: 12px; background: linear-gradient(45deg, var(--primary), #0099cc); color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                            <i class="fas fa-save"></i> ${t.save}
+                        </button>
+                        <button onclick="closeCoefficientsModal()" style="padding: 12px 20px; background: transparent; border: 2px solid var(--border); color: var(--text-primary); border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-times"></i> ${t.close}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.currentCoeffModal = modal;
+        }
+        
+        function saveNTSCoefficients() {
+            const baseRate = document.getElementById('ntsBaseRate').value;
+            const workerCost = document.getElementById('ntsWorkerCost').value;
+            
+            localStorage.setItem('nts_baseRate', baseRate);
+            localStorage.setItem('nts_workerCost', workerCost);
+            
+            alert('Коефіцієнти NTS збережено!');
+            closeCoefficientsModal();
+        }
+        
+        function closeCoefficientsModal() {
+            if (window.currentCoeffModal) {
+                window.currentCoeffModal.remove();
+                window.currentCoeffModal = null;
+            }
+        }
+        
+        let lastCalculation = null;
+        
+        function calculate() {
+            const area = parseFloat(document.getElementById('area').value) || 0;
+            const distance = parseFloat(document.getElementById('distance').value) || 0;
+            const complexity = parseFloat(document.getElementById('complexity').value) || 0;
+            const fuelPrice = parseFloat(document.getElementById('fuel-price').value) || 65;
+            const fuelConsumption = parseFloat(document.getElementById('fuel-consumption').value) || 17;
+            const urgent = document.getElementById('nts-urgent').checked;
+            
+            if (area <= 0) {
+                alert('Введіть коректні дані');
+                return;
+            }
+            
+            // Завантажуємо збережені коефіцієнти
+            const baseRate = parseFloat(localStorage.getItem('nts_baseRate')) || 500;
+            const urgencyPercent = parseFloat(localStorage.getItem('nts_urgency')) || 20;
+            const transportCost = distance * (fuelConsumption / 100) * fuelPrice * 2;
+            
+            const baseCost = area * baseRate;
+            const subtotal = baseCost + transportCost;
+            const complexityCost = subtotal * (complexity / 100);
+            const urgentCost = urgent ? subtotal * (urgencyPercent / 100) : 0;
+            const totalCost = subtotal + complexityCost + urgentCost;
+            
+            lastCalculation = {
+                type: 'NTS',
+                area, distance, complexity, fuelPrice, fuelConsumption, urgent,
+                baseCost, transportCost, urgentCost, totalCost,
+                timestamp: new Date().toLocaleString(),
+                formula: `Формула: (${area} га × ${baseRate} грн/га) + паливо(${distance} км × ${fuelConsumption}/100 × ${fuelPrice} грн/л × 2 = ${transportCost.toFixed(2)} грн) + ${complexity}% складність${urgent ? ` + ${urgencyPercent}% терміновість` : ''} = ${totalCost.toFixed(2)} грн`
+            };
+            
+            // Save user data
+            if (window.parent && window.parent.saveUserData) {
+                window.parent.saveUserData('calc_nts', lastCalculation);
+            }
+            
+            displayResults(lastCalculation);
+        }
+        
+        function displayResults(results) {
+            const lang = localStorage.getItem('language') || 'uk';
+            const resultTexts = {
+                uk: {
+                    title: `Вартість NTS: ${results.totalCost.toFixed(2)} грн`,
+                    formula: '📊 Формула розрахунку:',
+                    survey: 'Обстеження',
+                    road: 'Дорога',
+                    area: 'Площа',
+                    complexity: 'Складність',
+                    currency: 'грн'
+                },
+                en: {
+                    title: `NTS cost: ${results.totalCost.toFixed(2)} UAH`,
+                    formula: '📊 Calculation formula:',
+                    survey: 'Survey',
+                    road: 'Transport',
+                    area: 'Area',
+                    complexity: 'Complexity',
+                    currency: 'UAH'
+                },
+                fr: {
+                    title: `Coût NTS: ${results.totalCost.toFixed(2)} UAH`,
+                    formula: '📊 Formule de calcul:',
+                    survey: 'Enquête',
+                    road: 'Transport',
+                    area: 'Zone',
+                    complexity: 'Complexité',
+                    currency: 'UAH'
+                }
+            };
+            
+            const t = resultTexts[lang];
+            
+            document.getElementById('results').innerHTML = `
+                <div class="result-card">
+                    <div class="result-title">${t.title}</div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin: 15px 0; font-family: monospace; font-size: 0.9rem;">
+                        <strong>${t.formula}</strong><br>
+                        ${results.formula}
+                    </div>
+                    <div class="result-details">
+                        <div class="detail-item">
+                            <strong>${t.survey} (фінально)</strong><br>
+                            ${(results.totalCost - results.transportCost).toFixed(2)} ${t.currency}
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.road} (фінально)</strong><br>
+                            ${results.transportCost.toFixed(2)} ${t.currency}
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.area}</strong><br>
+                            ${results.area} ha
+                        </div>
+                        <div class="detail-item">
+                            <strong>${t.complexity}</strong><br>
+                            +${results.complexity}%
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('exportBtn').style.display = 'inline-flex';
+        }
+        
+        // Listen for route distance
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'routeDistance') {
+                document.getElementById('distance').value = event.data.distance;
+                closeRouteModal();
+            }
+            if (event.data.type === 'themeChange') {
+                applyTheme(event.data.theme);
+            }
+        });
+        
+        // Load user data
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.parent && window.parent.loadUserData) {
+                const userData = window.parent.loadUserData('calc_nts');
+                if (userData.area) document.getElementById('area').value = userData.area;
+                if (userData.workers) document.getElementById('workers').value = userData.workers;
+                if (userData.distance) document.getElementById('distance').value = userData.distance;
+                if (userData.complexity) document.getElementById('complexity').value = userData.complexity;
+            }
+            
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        });
+        
+        // Theme handling
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme || 'dark');
+        }
+        
+        // Listen for theme changes and load saved values
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'themeChange') {
+                applyTheme(event.data.theme);
+            }
+        });
+        
+        const translations = {
+            uk: {
+                'title': 'NTS Калькулятор',
+                'subtitle': 'Розрахунок вартості нетехнічного обстеження',
+                'area-label': 'Площа обстеження (га)',
+                'distance-label': 'Відстань до об\'єкта (км)',
+                'complexity-label': 'Коефіцієнт складності',
+                'fuel-price-label': 'Вартість палива (грн/л)',
+                'fuel-consumption-label': 'Розхід палива (л/100км)',
+                'complexity-low': 'Низька',
+                'complexity-medium': 'Середня',
+                'complexity-high': 'Висока',
+                'complexity-critical': 'Критична',
+                'calc-btn': 'Розрахувати',
+                'coefficients-btn': 'Коефіцієнти',
+                'route-btn': 'Розрахунок маршруту',
+                'export-btn': 'Експорт PDF',
+                'urgency-label': 'Терміновість',
+                'urgency-label-top': 'Терміновість',
+                'close': 'Закрити'
+            },
+            en: {
+                'title': 'NTS Calculator',
+                'subtitle': 'Non-technical survey cost calculation',
+                'area-label': 'Survey area (ha)',
+                'distance-label': 'Distance to object (km)',
+                'complexity-label': 'Complexity coefficient',
+                'fuel-price-label': 'Fuel price (UAH/l)',
+                'fuel-consumption-label': 'Fuel consumption (l/100km)',
+                'complexity-low': 'Low',
+                'complexity-medium': 'Medium',
+                'complexity-high': 'High',
+                'complexity-critical': 'Critical',
+                'calc-btn': 'Calculate',
+                'coefficients-btn': 'Coefficients',
+                'route-btn': 'Route Calculator',
+                'export-btn': 'Export PDF',
+                'urgency-label': 'Urgency',
+                'urgency-label-top': 'Urgency',
+                'close': 'Close'
+            },
+            fr: {
+                'title': 'Calculatrice NTS',
+                'subtitle': 'Calcul du coût d\'enquête non technique',
+                'area-label': 'Zone d\'enquête (ha)',
+                'distance-label': 'Distance à l\'objet (km)',
+                'complexity-label': 'Coefficient de complexité',
+                'fuel-price-label': 'Prix du carburant (UAH/l)',
+                'fuel-consumption-label': 'Consommation (l/100km)',
+                'complexity-low': 'Faible',
+                'complexity-medium': 'Moyen',
+                'complexity-high': 'Élevé',
+                'complexity-critical': 'Critique',
+                'calc-btn': 'Calculer',
+                'coefficients-btn': 'Coefficients',
+                'route-btn': 'Calculateur d\'Itinéraire',
+                'export-btn': 'Exporter PDF',
+                'urgency-label': 'Urgence',
+                'urgency-label-top': 'Urgence',
+                'close': 'Fermer'
+            }
+        };
+        
+        function setLanguage(lang) {
+            const translation = translations[lang];
+            if (translation) {
+                for (const [key, value] of Object.entries(translation)) {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.textContent = value;
+                    }
+                }
+            }
+            localStorage.setItem('language', lang);
+            updateLanguageButton(lang);
+        }
+        
+        function toggleLanguage() {
+            const currentLang = localStorage.getItem('language') || 'uk';
+            const languages = ['uk', 'en', 'fr'];
+            const currentIndex = languages.indexOf(currentLang);
+            const nextIndex = (currentIndex + 1) % languages.length;
+            setLanguage(languages[nextIndex]);
+        }
+        
+        function updateLanguageButton(lang) {
+            const flags = { uk: '🇺🇦', en: '🇺🇸', fr: '🇫🇷' };
+            const btn = document.getElementById('langBtn');
+            if (btn) btn.textContent = flags[lang] || flags.uk;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedLang = localStorage.getItem('language') || 'uk';
+            setLanguage(savedLang);
+            
+            // Load saved values
+            const savedArea = localStorage.getItem('nts_area');
+            const savedDistance = localStorage.getItem('nts_distance');
+            const savedComplexity = localStorage.getItem('nts_complexity');
+            const savedFuelPrice = localStorage.getItem('nts_fuelPrice');
+            const savedFuelConsumption = localStorage.getItem('nts_fuelConsumption');
+            
+            if (savedArea) document.getElementById('area').value = savedArea;
+            if (savedDistance) document.getElementById('distance').value = savedDistance;
+            if (savedComplexity) document.getElementById('complexity').value = savedComplexity;
+            if (savedFuelPrice) document.getElementById('fuel-price').value = savedFuelPrice;
+            if (savedFuelConsumption) document.getElementById('fuel-consumption').value = savedFuelConsumption;
+            
+            // Add event listeners to save on change
+            const inputs = ['area', 'distance', 'complexity', 'fuel-price', 'fuel-consumption'];
+            inputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', saveNTSValues);
+                    element.addEventListener('change', saveNTSValues);
+                }
+            });
+        });
+        
+        function saveNTSValues() {
+            localStorage.setItem('nts_area', document.getElementById('area').value);
+            localStorage.setItem('nts_distance', document.getElementById('distance').value);
+            localStorage.setItem('nts_complexity', document.getElementById('complexity').value);
+            localStorage.setItem('nts_fuelPrice', document.getElementById('fuel-price').value);
+            localStorage.setItem('nts_fuelConsumption', document.getElementById('fuel-consumption').value);
+        }
+    </script>
+</body>
+</html>
